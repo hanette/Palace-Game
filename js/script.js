@@ -15,7 +15,7 @@ var player4;
 function createDeck(){
    deck.length = 0;
    suits.forEach(function(suit){
-      for(var i = 1; i < 14; i++){
+      for(var i = 2; i < 15; i++){
          deck.push({
             suit: suit,
             value: i,
@@ -63,9 +63,8 @@ class Player {
    }
 
    // Add array of cards to hands and clear pile
-   addPileToHand(arr){ // DEBUG: Not tested yet
-      this.hand.concat(arr);
-      pile.length = 0;
+   addPileToHand(){
+      this.hand = this.hand.concat(pile);
    }
 
    // Given card object, remove from hand
@@ -74,22 +73,23 @@ class Player {
    }
 
    // Remove a card from facedown and add to pile if valid. addPileToHand if not.
-   playFaceDown(){ // DEBUG: needs playable function, not tested yet
+   playFaceDown(){ // DEBUG: not tested yet
       var chosen = this.facedown.pop();
-      // condition
-      var check = playable();
+      // chosen = this.facedown.splice(Math.floor(Math.random()*(this.facedown),1);
+      var check = playable([chosen]);
+      console.log("check:",check);
       if(check){
          pile.push(chosen);
       } else{
          pile.push(chosen);
-         addPileToHand
+         this.addPileToHand();
+         pile.length = 0;
       }
    }
 
    // Given index of card in hand, add to end of pile and remove from hand
-   playCard(index){ // DEBUG: not tested yet
-      pile.push(this.hand.splice(index,1));
-      console.log("Pile:",pile); // DEBUG: Print cards in pile
+   playCard(index){
+      pile.push(this.hand.splice(index,1)[0]);
    }
 
    // Given amount, remove that amount of cards from deck and add to hand
@@ -101,7 +101,50 @@ class Player {
    }
 
 }
-
+// Check conditions ==========================================
+// Given an array of card(s), check if it's playable based on last card on deck
+function playable(card){
+   if (pile.length > 0){
+      var lastdeck = pile[pile.length-1];
+      if (card.length == 1){ // if it's only one card, check it with lastdeck
+         if(card[0].value == 2 || card[0].value == 10 || card[0].value == 7){
+            return true;
+         } else if (card[0].value >= lastdeck.value){
+            return true;
+         } else{
+            return false;
+         }
+      } else { // more than one card
+         let same = card[0].value;
+         for(var i = 1; i<card.length-1;i++){ // check if array are all same
+            if(same == card[i].value){
+               same = card[i].value;
+            } else{
+               return false;
+            }
+         }
+         if(card[0].value >= lastdeck.value || card[0].value == 2 || card[0].value == 10 || card[0].value == 7){
+            return true;
+         } else {
+            return false;
+         }
+      }
+   } else{ // deck is empty
+      if (card.length == 1){ // if it's only one card, return true
+         return true;
+      } else {
+         let same = card[0].value;
+         for(var i = 1; i<card.length-1;i++){
+            if(same == card[i].value){
+               same = card[i].value;
+            } else{
+               return false;
+            }
+         }
+         return true;
+      }
+   }
+}
 // Set Up ====================================================
 function setUp(){
    createDeck();
@@ -131,6 +174,10 @@ function startGame() {
    player4.chooseFaceUp(p4down);
    console.log(player4); // DEBUG: check what player 4 has
    player4.takeFromDeck(1);
+   player4.playFaceDown();
+   player4.playFaceDown();
+   player4.playFaceDown();
+   console.log("pile",pile); // DEBUG: Print pile
 }
 
 // Game Area
