@@ -73,7 +73,7 @@ class Player {
    }
 
    // Remove a card from facedown and add to pile if valid. addPileToHand if not.
-   playFaceDown(){ // DEBUG: not tested yet
+   playFaceDown(){
       var chosen = this.facedown.pop();
       // chosen = this.facedown.splice(Math.floor(Math.random()*(this.facedown),1);
       var check = playable([chosen]);
@@ -93,10 +93,17 @@ class Player {
    }
 
    // Given amount, remove that amount of cards from deck and add to hand
-   takeFromDeck(amt){
+
+   takeFromDeck(){
+      if(deck.length > 0 && this.hand.length < 3){
+         var amt = 3-this.hand.length;
+      }
       while(amt > 0){
          this.hand.push(deck.pop());
          amt--;
+         if(deck.length == 0){
+            break;
+         }
       }
    }
 
@@ -163,6 +170,39 @@ function setUp(){
    */
 }
 
+// Palace Game Order =========================================
+function playerTurn(player){
+   if (player.hand.length > 0){ // Play from hand
+      let allhand = "";
+      for(var i = 0; i < player.hand.length; i++){
+         allhand += player.hand[i].value + " ";
+      }
+      console.log("Player's card:",allhand);
+      var pInput = prompt("Play your card by inputting the index:");
+      var pArr = pInput.split(',');
+      var check = playable([player.hand[pArr]]);
+      if (!check){
+         console.log("Can't play with these cards");
+         console.log("Pile Current:",pile[pile.length-1]);
+         playerTurn(player);
+         return;
+      }
+      if (pArr.length == 1) { // Play one card
+         player.playCard(pArr[0]);
+      } else{ // Play multiple card
+         // Fill here
+      }
+
+      // Grab card if deck is not empty
+      player.takeFromDeck();
+   } else if (player.faceup.length > 0) { // Play Face Up
+
+   } else { // play face down
+
+   }
+
+
+}
 // User Experience ===========================================
 function startGame() {
    setUp();
@@ -173,10 +213,7 @@ function startGame() {
    var p4down = p4input.split(',');
    player4.chooseFaceUp(p4down);
    console.log(player4); // DEBUG: check what player 4 has
-   player4.takeFromDeck(1);
-   player4.playFaceDown();
-   player4.playFaceDown();
-   player4.playFaceDown();
+   playerTurn(player4);
    console.log("pile",pile); // DEBUG: Print pile
 }
 
