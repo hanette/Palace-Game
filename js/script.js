@@ -3,12 +3,13 @@
 var card; // Card Design
 var suits = ["spades", "clubs", "diamonds", "hearts"];
 var deck = [];
-var discard = [];
 var pile = [];
 var player1;
 var player2;
 var player3;
 var player4;
+var inProgress = true;
+var underSeven, higherSeven = false;
 
 // Card Creation ============================================
 // Go through each suit and create one of each card
@@ -45,6 +46,11 @@ class Player {
       this.hideFaceDown();
    }
 
+   // Return inProgress value to be false if player empties all cards
+   status(){
+      if(this.hand.length == 0 && this.facedown.length == 0 && this.faceup.length == 0) inProgress = false;
+   }
+
    // Change facedown card's hidden to be true
    hideFaceDown(){
       this.facedown[0].hidden = true;
@@ -54,46 +60,82 @@ class Player {
 
    // Given array of hand's index, add to faceup and remove from hand
    chooseFaceUp(a){
+      console.log(this.hand[a[0]],this.hand[a[1]],this.hand[a[2]]);
       this.faceup.push(this.hand[a[0]]);
       this.faceup.push(this.hand[a[1]]);
       this.faceup.push(this.hand[a[2]]);
-      this.removeFromHand(this.hand[a[0]]);
-      this.removeFromHand(this.hand[a[1]]);
-      this.removeFromHand(this.hand[a[2]]);
+      a.sort(function(a,b){ // Sort the index to be in order
+         return a-b;
+      });
+      this.removeFromHand(a[2]);
+      this.removeFromHand(a[1]);
+      this.removeFromHand(a[0]);
    }
 
    // Add array of cards to hands and clear pile
    addPileToHand(){
       this.hand = this.hand.concat(pile);
+      pile.length = 0;
    }
 
-   // Given card object, remove from hand
-   removeFromHand(card){
-         this.hand.splice(this.hand.indexOf(card), 1);
+   // Given card index, remove from hand
+   removeFromHand(index){
+         this.hand.splice(index, 1);
    }
 
    // Remove a card from facedown and add to pile if valid. addPileToHand if not.
-   playFaceDown(){
+   playFaceDown(player){
+      var power = checkPower(this.facedown[this.facedown.length-1].value, 2);
       var chosen = this.facedown.pop();
-      // chosen = this.facedown.splice(Math.floor(Math.random()*(this.facedown),1);
-      var check = playable([chosen]);
-      console.log("check:",check);
-      if(check){
-         pile.push(chosen);
-      } else{
-         pile.push(chosen);
+      pile.push(chosen);
+      if(power == -1 && chosen.value < pile[pile.length-1].value){
          this.addPileToHand();
-         pile.length = 0;
+      } else if (power == 2 || power == 7 || power == 10){
+         playPowerCard(chosen.value, player);
       }
    }
 
-   // Given index of card in hand, add to end of pile and remove from hand
-   playCard(index){
+   // Given index of card in hand and which card deck, add to end of pile and remove from hand. return value of power card or -1
+   playCard(index, which){
+      var check = this.checkPower(index, which);
       pile.push(this.hand.splice(index,1)[0]);
+      if(underSeven && pile[pile.length-1] > 7 && check == -1){ // check seven conditions
+         this.addPileToHand();
+         underSeven = false;
+      } else if(higherSeven && pile[pile.length-1] < 7 && check == -1){ // check seven conditions
+         this.addPileToHand();
+         higherSeven = false;
+      }
+
+      return check;
+   }
+
+   // If index is a power card, return value. if not, return -1
+   checkPower(index, which){
+      if (which == 0){
+         if (this.hand[index] == 2) return 2;
+         else if (this.hand[index] == 7) return 7;
+         else if (this.hand[index] == 10) return 10;
+      }
+      else if (which == 1){
+         if (this.faceup[index] == 2) return 2;
+         else if (this.faceup[index] == 7) return 7;
+         else if (this.faceup[index] == 10) return 10;
+      }
+      else if (which == 2){
+         if (this.facedown[index] == 2) return 2;
+         else if (this.facedown[index] == 7) return 7;
+         else if (this.facedown[index] == 10) return 10;
+      }
+      else return -1;
+   }
+
+   // Given index of card in face up, add to end of pile and remove from face up
+   playFaceUp(index){
+      pile.push(this.faceup.splice(index,1)[0]);
    }
 
    // Given amount, remove that amount of cards from deck and add to hand
-
    takeFromDeck(){
       if(deck.length > 0 && this.hand.length < 3){
          var amt = 3-this.hand.length;
@@ -152,6 +194,7 @@ function playable(card){
       }
    }
 }
+
 // Set Up ====================================================
 function setUp(){
    createDeck();
@@ -161,60 +204,179 @@ function setUp(){
    player3 = new Player(deck.splice(0,9));
    player4 = new Player(deck.splice(0,9));
 
-   /*
-   console.log("Deck after player:", deck); // DEBUG: Print deck after creating players
-   console.log(player1); // DEBUG: check what player 1 has
-   console.log(player2); // DEBUG: check what player 2 has
-   console.log(player3); // DEBUG: check what player 3 has
-   console.log(player4); // DEBUG: check what player 4 has
-   */
+   // Ask player to choose their face up cards
+   console.log("Player 1 Turn");
+   setFaceUp(player1);
+   console.log("Player 2 Turn");
+   setFaceUp(player2);
+   console.log("Player 3 Turn");
+   setFaceUp(player3);
+   console.log("Player 4 Turn");
+   setFaceUp(player4);
 }
 
-// Palace Game Order =========================================
-function playerTurn(player){
-   if (player.hand.length > 0){ // Play from hand
-      let allhand = "";
-      for(var i = 0; i < player.hand.length; i++){
-         allhand += player.hand[i].value + " ";
-      }
-      console.log("Player's card:",allhand);
-      var pInput = prompt("Play your card by inputting the index:");
-      var pArr = pInput.split(',');
-      var check = playable([player.hand[pArr]]);
-      if (!check){
-         console.log("Can't play with these cards");
-         console.log("Pile Current:",pile[pile.length-1]);
-         playerTurn(player);
-         return;
-      }
-      if (pArr.length == 1) { // Play one card
-         player.playCard(pArr[0]);
-      } else{ // Play multiple card
-         // Fill here
-      }
+// Set Face Up Card ==========================================
+function setFaceUp(player){
+   let allhand = "";
+   for(var i = 0; i < player.hand.length; i++){
+      allhand += player.hand[i].value + " ";
+   }
+   console.log("Current Cards:",allhand);
+   var pinput = prompt("Choose your 3 face down cards: "+" "+player.hand[0].value+" "+player.hand[1].value+" "+player.hand[2].value+" "+player.hand[3].value+" "+player.hand[4].value+" "+player.hand[5].value);
+   var pdown = pinput.split(',');
+   player.chooseFaceUp(pdown);
+}
 
-      // Grab card if deck is not empty
-      player.takeFromDeck();
-   } else if (player.faceup.length > 0) { // Play Face Up
+// Play Power Card ===========================================
+function playPowerCard(value,player){
+   if (value == 2){
+      if(underSeven) underSeven = false;
+      if(higherSeven) higherSeven = false;
+      playerTurn(player);
+      return;
+   }
+   if (value == 10){
+      if(higherSeven) higherSeven = false;
+      if(underSeven) underSeven = false;
+      pile.length = 0;
+   }
+   if (value == 7){
+      if(underSeven){
+         underSeven = false;
+         higherSeven = true;
+      } else if (higherSeven){
+         higherSeven = false;
+         underSeven = true;
+      }else{
+         underSeven = true;
+      }
+   }
+}
 
-   } else { // play face down
-
+// Play Hand =================================================
+function playHand(player){
+   // Print Player's hand
+   let allhand = "";
+   for(var i = 0; i < player.hand.length; i++){
+      allhand += player.hand[i].value + " ";
    }
 
+   // User Input
+   console.log("Player's card:",allhand);
+   var pInput = prompt("Play your card by inputting the index:");
 
+   // If player can't play, add pile to their hand
+   if(pInput == "None"){
+      player.addPileToHand();
+      return;
+   }
+
+   var pArr = pInput.split(','); // separate input into an array
+   var check = true; // check is playable
+   var cardArr = []; // contains card of chosen cards
+
+   // Iterate through all input indexes and check if it's playable
+   for(var i = 0; i < pArr.length; i++){
+      if(pArr[i] > player.hand.length-1){;
+         console.log("Not a valid Index");
+         playHand(player);
+         return;
+      }
+      cardArr.push(player.hand[pArr[i]]);
+   }
+
+   // Check if cards are playable
+   check = playable(cardArr);
+   if (!check){
+      console.log("Can't play with these cards");
+      console.log("Last card played:", pile[pile.length-1]);
+      playerTurn(player);
+      return;
+   }
+
+   // Play the cards
+   for (var i = 0; i < pArr.length; i++){
+      var value = player.playCard(pArr[i], 0);
+      if (value != -1) playPowerCard(value, player);
+   }
+
+   // Grab card if deck is not empty
+   player.takeFromDeck();
 }
+
+// Play Face Up ==============================================
+function playFaceUp(player){
+   // Print Player's hand
+   let allhand = "";
+   for(var i = 0; i < player.faceup.length; i++){
+      allhand += player.faceup[i].value + " ";
+   }
+   console.log("Player's Face Up card:",allhand);
+
+   // User Input
+   var pInput = prompt("Play your Face Up card by inputting the index:");
+
+   // If player can't play, add pile to their hand
+   if(pInput == "None"){
+      player.addPileToHand();
+      return;
+   }
+
+   var pArr = pInput.split(','); // separate input into an array
+   var check = true; // check if playable
+
+   // Iterate through all input indexes and check if it's playable
+   if(pArr.length > 1 || pArr[0] > player.faceup.length){
+      console.log("Not a valid Index");
+      playFaceUp(player);
+      return;
+   }
+   check = playable([player.faceup[pArr][0]]);
+
+   if (!check){
+      console.log("Can't play with these cards");
+      console.log("Pile Current:",pile[pile.length-1]);
+      playerTurn(player);
+      return;
+   }
+   // Play the cards
+   var value = player.playCard(pArr[0], 1);
+   if (value != -1) playPowerCard(value, player);
+
+   // Grab card if deck is not empty
+   player.takeFromDeck();
+}
+
+// Palace Choice =============================================
+function playerTurn(player){
+   console.log("Last card played:", pile[pile.length-1]);
+   if (player.hand.length > 0){ // Play from hand
+      playHand(player);
+   } else if (player.faceup.length > 0) { // Play Face Up
+      playFaceUp(player);
+   } else { // play face down
+      console.log("Playing facedown");
+      player.playFaceDown(player);
+   }
+   player.status();
+}
+
 // User Experience ===========================================
 function startGame() {
    setUp();
+   // Canvas ----
    canvas.start();
    card = new component(50,35, "white", 10, 120);
-   console.log(player4.hand[0].value,player4.hand[1].value,player4.hand[2].value,player4.hand[3].value);
-   var p4input = prompt("Choose your 3 face down cards: "+" "+player4.hand[0].value+" "+player4.hand[1].value+" "+player4.hand[2].value+" "+player4.hand[3].value+" "+player4.hand[4].value+" "+player4.hand[5].value);
-   var p4down = p4input.split(',');
-   player4.chooseFaceUp(p4down);
-   console.log(player4); // DEBUG: check what player 4 has
-   playerTurn(player4);
-   console.log("pile",pile); // DEBUG: Print pile
+   while(inProgress){
+      console.log("Player 1 Turn");
+      playerTurn(player1);
+      console.log("Player 2 Turn");
+      playerTurn(player2);
+      console.log("Player 3 Turn");
+      playerTurn(player3);
+      console.log("Player 4 Turn");
+      playerTurn(player4);
+   }
 }
 
 // Game Area
@@ -250,28 +412,3 @@ function updateCanvas() {
   canvas.clear();
   card.update();
 }
-
-// Old =============================================
-/* removeFromHand(card){
-   if (cards.length > 1){
-      let indexCount = [];
-      let check = cards[0];
-      for(var i = 1; i < cards.length(); i++){
-         if(check.value == cards[i].value){
-            check = cards[i];
-            indexCount.push(this.hand.indexOf(cards[i]));
-            // this.hand.splice(this.hand.indexOf(cards[i]), 1);
-         } else { // DEBUG: Remove once outside function check is made
-            console.log("Cannot discard different values at the same time.");
-            return;
-         }
-      }
-      for(var i = 0; i<indexCount.length;i++){ // DEBUG: Remove once outside function check is made
-         if (index > -1){
-            this.hand.splice(indexCount[i], 1);
-         }
-      }
-   } else{
-      this.hand.splice(this.hand.indexOf(card), 1);
-   }
-} */
