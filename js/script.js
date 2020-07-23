@@ -48,7 +48,10 @@ class Player {
 
    // Return inProgress value to be false if player empties all cards
    status(){
-      if(this.hand.length == 0 && this.facedown.length == 0 && this.faceup.length == 0) inProgress = false;
+      if(this.facedown.length <= 0){
+         inProgress = false;
+         console.log("GAME OVER");
+      }
    }
 
    // Change facedown card's hidden to be true
@@ -85,8 +88,9 @@ class Player {
 
    // Remove a card from facedown and add to pile if valid. addPileToHand if not.
    playFaceDown(player){
-      var power = checkPower(this.facedown[this.facedown.length-1].value, 2);
+      var power = this.checkPower(this.facedown.length-1, 2);
       var chosen = this.facedown.pop();
+      console.log("Face Down Length", this.facedown.length);
       pile.push(chosen);
       if(power == -1 && chosen.value < pile[pile.length-1].value){
          this.addPileToHand();
@@ -98,11 +102,19 @@ class Player {
    // Given index of card in hand and which card deck, add to end of pile and remove from hand. return value of power card or -1
    playCard(index, which){
       var check = this.checkPower(index, which);
-      pile.push(this.hand.splice(index,1)[0]);
-      if(underSeven && pile[pile.length-1] > 7 && check == -1){ // check seven conditions
+      if(which == 0){
+         pile.push(this.hand.splice(index,1)[0]);
+      } else if(which == 1){
+         pile.push(this.faceup.splice(index,1)[0]);
+      } else{
+         pile.push(this.facedown.splice(index,1)[0]);
+      }
+      if(underSeven && pile[pile.length-1].value > 7 && check == -1){ // check seven conditions
+         console.log("Inside underSeven");
          this.addPileToHand();
          underSeven = false;
-      } else if(higherSeven && pile[pile.length-1] < 7 && check == -1){ // check seven conditions
+      } else if(higherSeven && pile[pile.length-1].value < 7 && check == -1){ // check seven conditions
+         console.log("Inside higherSeven");
          this.addPileToHand();
          higherSeven = false;
       }
@@ -113,21 +125,24 @@ class Player {
    // If index is a power card, return value. if not, return -1
    checkPower(index, which){
       if (which == 0){
-         if (this.hand[index] == 2) return 2;
-         else if (this.hand[index] == 7) return 7;
-         else if (this.hand[index] == 10) return 10;
+         if (this.hand[index].value == 2) return 2;
+         else if (this.hand[index].value == 7) return 7;
+         else if (this.hand[index].value == 10) return 10;
+         else return -1;
       }
       else if (which == 1){
-         if (this.faceup[index] == 2) return 2;
-         else if (this.faceup[index] == 7) return 7;
-         else if (this.faceup[index] == 10) return 10;
+         if (this.faceup[index].value == 2) return 2;
+         else if (this.faceup[index].value == 7) return 7;
+         else if (this.faceup[index].value == 10) return 10;
+         else return -1;
       }
       else if (which == 2){
-         if (this.facedown[index] == 2) return 2;
-         else if (this.facedown[index] == 7) return 7;
-         else if (this.facedown[index] == 10) return 10;
+         console.log("face down value", this.facedown[index].value);
+         if (this.facedown[index].value == 2) return 2;
+         else if (this.facedown[index].value == 7) return 7;
+         else if (this.facedown[index].value == 10) return 10;
+         else return -1;
       }
-      else return -1;
    }
 
    // Given index of card in face up, add to end of pile and remove from face up
@@ -161,6 +176,10 @@ function playable(card){
          } else if (card[0].value >= lastdeck.value){
             return true;
          } else{
+            if(underSeven){
+               underSeven = false;
+               return true;
+            }
             return false;
          }
       } else { // more than one card
@@ -235,12 +254,12 @@ function playPowerCard(value,player){
       playerTurn(player);
       return;
    }
-   if (value == 10){
+   else if (value == 10){
       if(higherSeven) higherSeven = false;
       if(underSeven) underSeven = false;
       pile.length = 0;
    }
-   if (value == 7){
+   else if (value == 7){
       if(underSeven){
          underSeven = false;
          higherSeven = true;
@@ -272,6 +291,9 @@ function playHand(player){
    }
 
    var pArr = pInput.split(','); // separate input into an array
+   pArr.sort(function(a,b){ // Sort the index to be in order
+      return b-a;
+   });
    var check = true; // check is playable
    var cardArr = []; // contains card of chosen cards
 
@@ -283,13 +305,12 @@ function playHand(player){
          return;
       }
       cardArr.push(player.hand[pArr[i]]);
+      console.log("You've chosen:",cardArr[i]);
    }
-
    // Check if cards are playable
    check = playable(cardArr);
    if (!check){
       console.log("Can't play with these cards");
-      console.log("Last card played:", pile[pile.length-1]);
       playerTurn(player);
       return;
    }
@@ -297,6 +318,7 @@ function playHand(player){
    // Play the cards
    for (var i = 0; i < pArr.length; i++){
       var value = player.playCard(pArr[i], 0);
+      console.log("value:", value);
       if (value != -1) playPowerCard(value, player);
    }
 
@@ -326,16 +348,15 @@ function playFaceUp(player){
    var check = true; // check if playable
 
    // Iterate through all input indexes and check if it's playable
-   if(pArr.length > 1 || pArr[0] > player.faceup.length){
+   if(pArr.length > 1 || pArr[0] > player.faceup.length-1){
       console.log("Not a valid Index");
-      playFaceUp(player);
+      playerTurn(player);
       return;
    }
-   check = playable([player.faceup[pArr][0]]);
+   check = playable([player.faceup[pArr[0]]]);
 
    if (!check){
       console.log("Can't play with these cards");
-      console.log("Pile Current:",pile[pile.length-1]);
       playerTurn(player);
       return;
    }
@@ -352,10 +373,12 @@ function playerTurn(player){
    console.log("Last card played:", pile[pile.length-1]);
    if (player.hand.length > 0){ // Play from hand
       playHand(player);
-   } else if (player.faceup.length > 0) { // Play Face Up
+   } else
+   if (player.faceup.length > 0) { // Play Face Up
       playFaceUp(player);
-   } else { // play face down
-      console.log("Playing facedown");
+   } else
+   if (player.facedown.length > 0) { // play face down
+      console.log("Playing facedown...");
       player.playFaceDown(player);
    }
    player.status();
