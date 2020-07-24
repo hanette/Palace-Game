@@ -10,6 +10,7 @@ var player3;
 var player4;
 var inProgress = true;
 var underSeven, higherSeven = false;
+var bomb = {value: -1, count: 0};
 
 // Card Creation ============================================
 // Go through each suit and create one of each card
@@ -86,27 +87,20 @@ class Player {
          this.hand.splice(index, 1);
    }
 
-   // Remove a card from facedown and add to pile if valid. addPileToHand if not.
-   playFaceDown(player){
-      var power = this.checkPower(this.facedown.length-1, 2);
-      var chosen = this.facedown.pop();
-      console.log("Face Down Length", this.facedown.length);
-      pile.push(chosen);
-      if(power == -1 && chosen.value < pile[pile.length-1].value){
-         this.addPileToHand();
-      } else if (power == 2 || power == 7 || power == 10){
-         playPowerCard(chosen.value, player);
-      }
-   }
-
    // Given index of card in hand and which card deck, add to end of pile and remove from hand. return value of power card or -1
    playCard(index, which){
       var check = this.checkPower(index, which);
       if(which == 0){
+         bombCheck(this.hand[index].value);
+         console.log("bombCheck",bomb.value, bomb.count); // DEBUG: print
          pile.push(this.hand.splice(index,1)[0]);
       } else if(which == 1){
+         bombCheck(this.faceup[index].value);
+         console.log("bombCheck",bomb.value, bomb.count); // DEBUG: print
          pile.push(this.faceup.splice(index,1)[0]);
       } else{
+         bombCheck(this.facedown[index].value);
+         console.log("bombCheck",bomb.value, bomb.count); // DEBUG: print
          pile.push(this.facedown.splice(index,1)[0]);
       }
       if(underSeven && pile[pile.length-1].value > 7 && check == -1){ // check seven conditions
@@ -143,11 +137,6 @@ class Player {
          else if (this.facedown[index].value == 10) return 10;
          else return -1;
       }
-   }
-
-   // Given index of card in face up, add to end of pile and remove from face up
-   playFaceUp(index){
-      pile.push(this.faceup.splice(index,1)[0]);
    }
 
    // Given amount, remove that amount of cards from deck and add to hand
@@ -310,7 +299,7 @@ function playHand(player){
    // Check if cards are playable
    check = playable(cardArr);
    if (!check){
-      console.log("Can't play with these cards");
+      console.log("Can't play with these cards", cardArr);
       playerTurn(player);
       return;
    }
@@ -368,6 +357,35 @@ function playFaceUp(player){
    player.takeFromDeck();
 }
 
+// Play Face Down ============================================
+function playFaceDown(player){
+   // User Input
+   console.log("Face Down Card Remaining:", player.facedown.length);
+   var pInput = prompt("Play your Face Down card by inputting the index:");
+   var pArr = pInput.split(','); // separate input into an array
+   var check = true; // check if playable
+
+   // Iterate through all input indexes and check if it's playable
+   if(pArr.length > 1 || pArr[0] > player.facedown.length-1){
+      console.log("Not a valid Index");
+      playerTurn(player);
+      return;
+   }
+   check = playable([player.facedown[pArr[0]]]);
+
+   // Play the cards
+   var value = player.playCard(pArr[0], 2);
+   if (value != -1) playPowerCard(value, player);
+   if(!check){
+      console.log(pArr[0].value, "cannot beat last card");
+      player.addPileToHand();
+   }
+
+   // Grab card if deck is not empty
+   player.takeFromDeck();
+
+}
+
 // Palace Choice =============================================
 function playerTurn(player){
    console.log("Last card played:", pile[pile.length-1]);
@@ -378,10 +396,24 @@ function playerTurn(player){
       playFaceUp(player);
    } else
    if (player.facedown.length > 0) { // play face down
-      console.log("Playing facedown...");
-      player.playFaceDown(player);
+      playFaceDown(player);
    }
    player.status();
+}
+
+// Bomb Check and Play =======================================
+function bombCheck(value){
+   if (bomb.value == value){
+      bomb.count += 1;
+   } else{
+      bomb.value = value;
+      bomb.count = 0;
+   }
+   if (bomb.count >= 3){
+      pile.length = 0;
+      bomb.count = 0;
+      bomb.value = -1;
+   }
 }
 
 // User Experience ===========================================
