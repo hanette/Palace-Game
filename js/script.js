@@ -177,12 +177,14 @@ function playable(card){
             if(same == card[i].value){
                same = card[i].value;
             } else{
+               console.log("Failed, not same value");
                return false;
             }
          }
          if(card[0].value >= lastdeck.value || card[0].value == 2 || card[0].value == 10 || card[0].value == 7){
             return true;
          } else {
+            console.log("Failed, not bigger,equal, or power cards");
             return false;
          }
       }
@@ -413,6 +415,7 @@ function bombCheck(value){
       pile.length = 0;
       bomb.count = 0;
       bomb.value = -1;
+      console.log("pile:",pile.length);
    }
 }
 
@@ -425,10 +428,13 @@ function startGame() {
    while(inProgress){
       console.log("Player 1 Turn");
       playerTurn(player1);
+      if(inProgress) break;
       console.log("Player 2 Turn");
       playerTurn(player2);
+      if(inProgress) break;
       console.log("Player 3 Turn");
       playerTurn(player3);
+      if(inProgress) break;
       console.log("Player 4 Turn");
       playerTurn(player4);
    }
