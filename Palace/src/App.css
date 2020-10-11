@@ -1,0 +1,86 @@
+.App {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 14px;
+  text-align: center;
+  color: white;
+  min-height: 94vh;
+}
+
+.App-header {
+  display: block;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  font-size: calc(20px + 5vmin);
+}
+
+/* Headings and Body */
+body{background-color: #282c34;}
+h1{
+   font-weight: normal; margin: 15px;
+   font-size: calc(10px + 5vmin);
+}
+h2{font-weight: normal;}
+h3{
+   font-weight: normal; margin: 15px;
+   font-size: calc(7px + 5vmin);
+}
+h4{
+   font-weight: normal; margin: 10px;
+   font-size: calc(7px + 3vmin);
+}
+p{
+   font-weight: normal; margin: 15px;
+   font-size: calc(7px + 2vmin);
+   font-family: 'Roboto', sans-serif;
+}
+
+/* Button */
+button:hover{ background-color: white; color: #FF5F4B;}
+button:active{ border: 2px solid #7D1103; color: #7D1103;}
+button{
+  font-family: 'Bebas Neue', cursive;
+  font-size: calc(10px + 2vmin);
+  background-color: #FF5F4B;
+  border: 2px solid #FF5F4B;
+  border-radius: 8px;
+  color: white;
+  padding: 10px; margin: 10px;
+  outline: none;
+  transition-duration: 0.2s;
+}
+
+/* Card Design */
+.card{
+   box-shadow: 1px 1px 3px #000; -moz-box-shadow: 1px 1px 3px #000; -webkit-box-shadow: 1px 1px 3px #000;
+   border: 0px solid black; border-radius:10px; -moz-border-radius:10px; -webkit-border-radius:10px;
+   width: 5em; height: 7.5em;
+   padding: 10px; margin: 10px;
+   text-align: center; font-size: calc(10px + 2vmin);
+   display: inline-block; background: #FFF;
+}
+.card-top{text-align: left;}
+.card-bot{ text-align: right;}
+.card-center{ margin: 0; font-size: calc(15px + 5vmin);}
+.red { color: #CC0033;}
+.black { color: #1D1D20;}
+span{display: block; margin:0;}
+
+/* Help Page */
+.help{
+   text-align: left;
+   margin-right: calc(35px + 10vmin);
+   margin-left: calc(10px + 5vmin);
+}
+
+/* Form */
+input[type=text], select, textarea {
+  font-family: 'Roboto', sans-serif;
+  width: calc(100px + 25vmin);
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  resize: vertical;
+}
