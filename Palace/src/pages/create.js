@@ -1,6 +1,6 @@
 import React from 'react';
-import '../App.css';
-import {BrowserRouter as Router, Route, Switch, Link, Redirect} from 'react-router-dom';
+import '../css/App.css';
+import {BrowserRouter as Link} from 'react-router-dom';
 
 export class CreateLobby extends React.Component {
    constructor(props){
